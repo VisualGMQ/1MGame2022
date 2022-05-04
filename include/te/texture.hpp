@@ -1,0 +1,36 @@
+#pragma once
+
+#include "pch.hpp"
+#include "glhelp.hpp"
+#include "storage.hpp"
+#include "mathf.hpp"
+
+namespace te {
+
+class Texture final {
+public:
+    Texture(const unsigned char* data, int w, int h, int channel);
+    ~Texture();
+
+    int Width() const { return size_.w; }
+    int Height() const { return size_.h; }
+    const Size& Size() const { return size_; }
+
+    void Bind(unsigned int slot = 0);
+    void Unbind();
+
+private:
+    GLuint id_;
+    ::te::Size size_;
+};
+
+class TextureMgr final {
+public:
+    static Texture* Load(const char* filename, const char* name);
+    static Texture* Find(const char* name);
+
+private:
+    static Storage<const char*, std::unique_ptr<Texture>> storage_;
+};
+
+}
