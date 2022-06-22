@@ -147,14 +147,14 @@ using Color = Vector4;
 /*******************
  * Rect
 *******************/
-template <typename T>
-struct RectBase final {
+struct Rect final {
     union {
         struct { float x, y, w, h; };
+        struct { Vec2 pos; Vec2 size; };
     };
 
-    RectBase(): x{}, y{}, w{}, h{} {}
-    RectBase(float x, float y, float w, float h): x(x), y(y), w(w), h(h) {}
+    Rect(): x{}, y{}, w{}, h{} {}
+    Rect(float x, float y, float w, float h): x(x), y(y), w(w), h(h) {}
 
     void Set(float x, float y, float w, float h) {
         this->x = x;
@@ -162,17 +162,15 @@ struct RectBase final {
         this->w = w;
         this->h = h;
     }
+
+    Rect& operator=(const Rect& o) {
+        pos = o.pos;
+        size = o.size;
+        return *this;
+    }
 };
 
-using Rect = RectBase<double>;
-using Recti = RectBase<int>;
-
 inline bool IsPointInRect(const Rect& r, const Vector2& p) {
-    return p.x >= r.x && p.x <= r.x + r.w &&
-           p.y >= r.y && p.y <= r.y + r.h;
-}
-
-inline bool IsPointInRect(const Recti& r, const Vector2& p) {
     return p.x >= r.x && p.x <= r.x + r.w &&
            p.y >= r.y && p.y <= r.y + r.h;
 }

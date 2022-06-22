@@ -8,18 +8,45 @@
 #include "glbuffer.hpp"
 #include "vertex.hpp"
 #include "vertex_array.hpp"
+#include "image.hpp"
 
 namespace te {
 
+enum Flip {
+    None = 0x00,
+    Vertical = 0x01,
+    Horizontal = 0x02,
+    Both = Vertical | Horizontal,
+};
+
+struct Transform {
+    Flip flip = Flip::None;
+    Rect dstRect = {0, 0, 0, 0};
+    float rotation = 0;
+    
+    Transform& SetFlip(Flip flip) {
+        this->flip = flip;
+        return *this;
+    }
+
+    Transform& SetRotation(float degree) {
+        this->rotation = degree;
+        return *this;
+    }
+
+    Transform& SetSize(const Size& size) {
+        dstRect.size = size;
+        return *this;
+    }
+
+    Transform& SetPos(const Vec2& pos) {
+        dstRect.pos = pos;
+        return *this;
+    }
+};
+
 class Renderer final {
 public:
-    enum Flip {
-        None = 0x00,
-        Vertical = 0x01,
-        Horizontal = 0x02,
-        Both = Vertical | Horizontal,
-    };
-
     static void Init(int w, int h);
     static void Quit();
 
@@ -30,11 +57,13 @@ public:
 
     static void SetViewMat(const Mat4& view);
 
+    static void DrawImage(const Image&, const Transform&, const Vec2& anchor, const Color& = Color(1, 1, 1, 1));
     static void DrawTexture(Texture& texture,
-                            Rect* src, Rect* dst,
+                            const Rect* src, const Rect* dst,
+                            const Vec2& anchor,
                             float rotation,
                             const Color& color = Color(1, 1, 1),
-                            Renderer::Flip flip = None);
+                            Flip flip = None);
     static void DrawRect(const Rect& rect, const Color& color);
     static void FillRect(const Rect& rect, const Color& color);
     static void DrawLine(const Vec2& p1, const Vec2& p2,

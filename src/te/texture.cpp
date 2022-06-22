@@ -48,17 +48,17 @@ Texture::~Texture() {
 }
 
 
-Storage<const char*, std::unique_ptr<Texture>> TextureMgr::storage_;
+Storage<std::string_view, std::unique_ptr<Texture>> TextureMgr::storage_;
 
-Texture* TextureMgr::Load(const char* filename, const char* name) {
+Texture* TextureMgr::Load(std::string_view filename, std::string_view name) {
     if (storage_.Find(name)) {
-        ENGINE_LOG_WARN("%s texture already exists", name);
+        ENGINE_LOG_WARN("%s texture already exists", name.data());
         return nullptr;
     } else {
         int w, h, channel;
-        unsigned char* data = stbi_load(filename, &w, &h, &channel, 4);
+        unsigned char* data = stbi_load(filename.data(), &w, &h, &channel, 4);
         if (!data) {
-            ENGINE_LOG_ERROR("%s load failed", filename);
+            ENGINE_LOG_ERROR("%s load failed", filename.data());
             return nullptr;
         }
         Texture* texture = new Texture(data, w, h, channel);
@@ -68,7 +68,7 @@ Texture* TextureMgr::Load(const char* filename, const char* name) {
     }
 }
 
-Texture* TextureMgr::Find(const char* name) {
+Texture* TextureMgr::Find(std::string_view name) {
     auto texture = storage_.Find(name);
     if (texture) {
         return texture->get();

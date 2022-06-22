@@ -3,7 +3,6 @@
 namespace te {
 
 GLFWwindow* Engine::window_ = nullptr;
-Timer Engine::steadyTimer_;
 Size Engine::initWindowSize_;
 
 
@@ -26,6 +25,8 @@ void Engine::Init(const char* title, int w, int h) {
     initWindowSize_.Set(w, h);
 
     Renderer::Init(w, h);
+
+    gui::Init(window_);
 }
 
 void Engine::initGLFW() {
@@ -70,7 +71,9 @@ void Engine::Run() {
     while (!glfwWindowShouldClose(window_)) {
         Renderer::Clear();
 
-        steadyTimer_.Update();
+        Timer::SteadyTimer.Update();
+
+        gui::Begin();
 
         auto scence = ScenceMgr::GetCurrentScence();
         if (scence) {
@@ -78,12 +81,15 @@ void Engine::Run() {
             scence->OnRender();
         }
 
+        gui::End();
+
         glfwSwapBuffers(window_);
         glfwPollEvents();
     }
 }
 
 void Engine::Quit() {
+    gui::Shutdown();
     Renderer::Quit();
     glfwDestroyWindow(window_);
     glfwTerminate();

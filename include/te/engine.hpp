@@ -4,6 +4,7 @@
 #include "event_dispatcher.hpp"
 #include "scence.hpp"
 #include "glhelp.hpp"
+#include "gui/gui.hpp"
 
 namespace te {
 
@@ -12,14 +13,12 @@ public:
     static void Init(const char* title, int w, int h);
     static void Quit();
     static GLFWwindow* GetWindow() { return window_; }
-    static const Timer& GetSteadyTimer() { return steadyTimer_; }
 
     static void Run();
     static Size GetCanvaSize() { return initWindowSize_; }
 
 private:
     static GLFWwindow* window_;
-    static Timer steadyTimer_;
     static Size initWindowSize_;
 
     static void initGLFW();

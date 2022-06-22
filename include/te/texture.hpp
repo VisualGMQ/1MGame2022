@@ -26,11 +26,11 @@ private:
 
 class TextureMgr final {
 public:
-    static Texture* Load(const char* filename, const char* name);
-    static Texture* Find(const char* name);
+    static Texture* Load(std::string_view filename, std::string_view name);
+    static Texture* Find(std::string_view name);
 
 private:
-    static Storage<const char*, std::unique_ptr<Texture>> storage_;
+    static Storage<std::string_view, std::unique_ptr<Texture>> storage_;
 };
 
 }

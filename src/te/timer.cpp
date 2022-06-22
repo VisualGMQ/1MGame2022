@@ -1,7 +1,8 @@
 #include "te/timer.hpp"
 
-
 namespace te {
+
+Timer Timer::SteadyTimer;
 
 Timer::Timer(): oldTime_(0) {}
 

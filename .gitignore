@@ -1,3 +1,6 @@
 build
 Session.vim
 xcode-build
+imgui.ini
+design
+compile_commands.json

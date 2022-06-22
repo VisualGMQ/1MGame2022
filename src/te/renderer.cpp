@@ -83,15 +83,20 @@ void Renderer::SetViewMat(const Mat4& view) {
 }
 
 void Renderer::DrawTexture(Texture& texture,
-                           Rect* src, Rect* dst,
+                           const Rect* src, const Rect* dst,
+                           const Vec2& anchor,
                            float rotation,
                            const Color& color,
-                           Renderer::Flip flip) {
+                           Flip flip) {
     std::array<Vertex, 4> vertices;
-    vertices[0].position.Set(-0.5, 0.5);
-    vertices[1].position.Set(0.5, -0.5);
-    vertices[2].position.Set(0.5, 0.5);
-    vertices[3].position.Set(-0.5, -0.5);
+    vertices[0].position.Set(0, 1);
+    vertices[1].position.Set(1, 0);
+    vertices[2].position.Set(1, 1);
+    vertices[3].position.Set(0, 0);
+
+    for (auto& vertex : vertices) {
+        vertex.position -= anchor;
+    }
 
     if (flip & Vertical) {
         for (auto& vertex : vertices) {
@@ -125,6 +130,23 @@ void Renderer::DrawTexture(Texture& texture,
                  texture,
                  GL_TRIANGLES,
                  modelMat);
+}
+
+void Renderer::DrawImage(const Image& image,
+                         const Transform& transform,
+                         const Vec2& anchor,
+                         const Color& color) {
+    Rect dstRect = transform.dstRect;
+    if (dstRect.w == 0 || dstRect.h == 0) {
+        dstRect.size = image.srcRect_.size;
+    }
+    Renderer::DrawTexture(*image.texture_,
+                          &image.srcRect_,
+                          &dstRect,
+                          anchor,
+                          transform.rotation,
+                          color,
+                          transform.flip);
 }
 
 void Renderer::FillRect(const Rect& rect, const Color& color) {
