@@ -47,3 +47,14 @@ target_precompile_headers(game REUSE_FROM tinyengine)
 ####################
 add_subdirectory(3rdpart/imgui)
 add_subdirectory(tools)
+
+####################
+# run game
+####################
+
+message(STATUS ${CMAKE_BINARY_DIR})
+
+add_custom_target(
+    run
+    COMMAND ./${CMAKE_BINARY_DIR}/Debug/game.exe
+)

@@ -39,7 +39,9 @@ void RunScence(const char* name, Args&&... args) {
     Engine::Run();
 
     ScenceMgr::Quit();
+    GAME_LOG_INFO("scence quit");
     Engine::Quit();
+    GAME_LOG_INFO("engine quit");
 }
 
 }

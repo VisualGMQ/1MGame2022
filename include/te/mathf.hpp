@@ -1,12 +1,11 @@
 #pragma once
 
 #include "pch.hpp"
-#include <sys/wait.h>
 
 namespace te {
 
 /******************
- * Vector22
+ * Vector2
 ******************/
 struct Vector2 {
     union {

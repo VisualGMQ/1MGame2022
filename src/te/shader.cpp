@@ -58,9 +58,8 @@ std::shared_ptr<ShaderModule> ShaderModule::CreateFragmentByFile(const std::stri
     return ShaderModule::CreateFragmentByCode(code);
 }
 
-
 Shader::Shader(const std::shared_ptr<ShaderModule>& vertex,
-                         const std::shared_ptr<ShaderModule>& fragment) {
+			   const std::shared_ptr<ShaderModule>& fragment) {
     program_ = glCreateProgram();
     if (program_ == 0) {
         ENGINE_LOG_WARN("shader program create failed");

@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "te/engine.hpp"
 #include "te/animation.hpp"
 #include "game/entity.hpp"

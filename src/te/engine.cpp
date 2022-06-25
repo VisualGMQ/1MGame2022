@@ -5,7 +5,6 @@ namespace te {
 GLFWwindow* Engine::window_ = nullptr;
 Size Engine::initWindowSize_;
 
-
 void error_callback(int error, const char* description) {
     fprintf(stderr, "[GLFW Error]: %s\n", description);
 }
