@@ -13,9 +13,8 @@ const char* GLGetErrorString(GLenum err) {
         CASE(GL_OUT_OF_MEMORY)
         CASE(GL_INVALID_FRAMEBUFFER_OPERATION)
         default:
-            return "Unknown OpenGL Error";
+            return "Unknown Error";
     }
-    return "Unknown Error";
 }
 
 #undef CASE
