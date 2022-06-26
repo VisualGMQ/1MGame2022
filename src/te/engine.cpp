@@ -90,6 +90,7 @@ void Engine::Run() {
 void Engine::Quit() {
     gui::Shutdown();
     Renderer::Quit();
+    TextureMgr::Quit();
     glfwDestroyWindow(window_);
     glfwTerminate();
 }

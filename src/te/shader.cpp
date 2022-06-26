@@ -34,15 +34,15 @@ ShaderModule::~ShaderModule() {
     GL_CALL(glDeleteShader(shader_));
 }
 
-std::shared_ptr<ShaderModule> ShaderModule::CreateVertexByCode(const std::string& code) {
-    return std::shared_ptr<ShaderModule>(new ShaderModule(ShaderType::Vertex, code.data()));
+std::unique_ptr<ShaderModule> ShaderModule::CreateVertexByCode(const std::string& code) {
+    return std::unique_ptr<ShaderModule>(new ShaderModule(ShaderType::Vertex, code.data()));
 }
 
-std::shared_ptr<ShaderModule> ShaderModule::CreateFragmentByCode(const std::string& code) {
-    return std::shared_ptr<ShaderModule>(new ShaderModule(ShaderType::Fragment, code.data()));
+std::unique_ptr<ShaderModule> ShaderModule::CreateFragmentByCode(const std::string& code) {
+    return std::unique_ptr<ShaderModule>(new ShaderModule(ShaderType::Fragment, code.data()));
 }
 
-std::shared_ptr<ShaderModule> ShaderModule::CreateVertexByFile(const std::string& filename) {
+std::unique_ptr<ShaderModule> ShaderModule::CreateVertexByFile(const std::string& filename) {
     std::ifstream file(filename);
     std::string code((std::istreambuf_iterator<char>(file)),
                      std::istreambuf_iterator<char>());
@@ -50,7 +50,7 @@ std::shared_ptr<ShaderModule> ShaderModule::CreateVertexByFile(const std::string
     return ShaderModule::CreateVertexByCode(code);
 }
 
-std::shared_ptr<ShaderModule> ShaderModule::CreateFragmentByFile(const std::string& filename) {
+std::unique_ptr<ShaderModule> ShaderModule::CreateFragmentByFile(const std::string& filename) {
     std::ifstream file(filename);
     std::string code((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
@@ -58,15 +58,15 @@ std::shared_ptr<ShaderModule> ShaderModule::CreateFragmentByFile(const std::stri
     return ShaderModule::CreateFragmentByCode(code);
 }
 
-Shader::Shader(const std::shared_ptr<ShaderModule>& vertex,
-			   const std::shared_ptr<ShaderModule>& fragment) {
+Shader::Shader(const ShaderModule& vertex,
+			   const ShaderModule& fragment) {
     program_ = glCreateProgram();
     if (program_ == 0) {
         ENGINE_LOG_WARN("shader program create failed");
     }
 
-    GL_CALL(glAttachShader(program_, vertex->shader_));
-    GL_CALL(glAttachShader(program_, fragment->shader_));
+    GL_CALL(glAttachShader(program_, vertex.shader_));
+    GL_CALL(glAttachShader(program_, fragment.shader_));
     GL_CALL(glLinkProgram(program_));
 
     char infoLog[512];

@@ -1,5 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
-
 #include "te/engine.hpp"
 #include "te/animation.hpp"
 #include "game/entity.hpp"
@@ -7,7 +5,7 @@
 
 class WelcomeLayer: public te::Layer {
 public:
-    WelcomeLayer(const char* name): te::Layer(name) {}
+    WelcomeLayer(std::string_view name): te::Layer(name) {}
 
     void OnInit() override {
         tilesheet_.reset(new te::TileSheet(te::Image::Create("kirby"), 16, 2));
@@ -57,12 +55,11 @@ private:
 
 class WelcomeScence: public te::Scence {
 public:
-    WelcomeScence(const char* name): te::Scence(name) {}
+    WelcomeScence(std::string_view name): te::Scence(name) {}
 
     void OnInit() override {
         te::TextureMgr::Load("assets/image/cube_man.png", "cube_man");
         te::TextureMgr::Load("assets/image/kirby.png", "kirby");
-        GAME_LOG_DEBUG("layer init");
 
         GAME_LOG_DEBUG("welcome scence init");
         PushBackLayer<WelcomeLayer>("StartLayer");

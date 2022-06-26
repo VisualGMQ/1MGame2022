@@ -4,3 +4,7 @@ xcode-build
 imgui.ini
 design
 compile_commands.json
+vs-build
+out
+.vs
+.cache

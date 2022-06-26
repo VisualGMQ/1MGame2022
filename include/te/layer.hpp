@@ -5,7 +5,7 @@ namespace te {
 
 class Layer {
 public:
-    Layer(const char* name);
+    Layer(std::string_view name);
     virtual ~Layer() = default;
 
     virtual void OnInit() {}
@@ -19,7 +19,7 @@ public:
     virtual bool OnEventMouseButtonDown(int button, int mods) { return true; }
     virtual bool OnEventMouseButtonUp(int button, int mods) { return true; }
 
-    const char* GetName() const { return name_; }
+    std::string_view GetName() const { return name_; }
 
     bool IsWorking() const { return isWorking_; }
     void StartWorking() { isWorking_ = true; }
@@ -27,7 +27,7 @@ public:
 
 private:
     bool isWorking_ = true;
-    const char* name_;
+    std::string_view name_;
 };
 
 }

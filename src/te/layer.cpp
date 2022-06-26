@@ -2,6 +2,6 @@
 
 namespace te {
 
-Layer::Layer(const char* name): name_(name) {}
+Layer::Layer(std::string_view name): name_(name) {}
 
 }

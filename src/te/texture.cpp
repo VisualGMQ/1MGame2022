@@ -77,4 +77,8 @@ Texture* TextureMgr::Find(std::string_view name) {
     }
 }
 
+void TextureMgr::Quit() {
+    storage_.Clear();
+}
+
 }

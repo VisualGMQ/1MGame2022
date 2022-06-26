@@ -19,6 +19,7 @@
 #include <iterator>
 #include <initializer_list>
 #include <array>
+#include <sstream>
 
 // my header files
 #include "log.hpp"

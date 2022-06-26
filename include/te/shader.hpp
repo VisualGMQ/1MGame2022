@@ -15,10 +15,10 @@ class ShaderModule final {
 public:
     friend class Shader;
 
-    static std::shared_ptr<ShaderModule> CreateVertexByCode(const std::string& code);
-    static std::shared_ptr<ShaderModule> CreateFragmentByCode(const std::string& code);
-    static std::shared_ptr<ShaderModule> CreateVertexByFile(const std::string& filename);
-    static std::shared_ptr<ShaderModule> CreateFragmentByFile(const std::string& filename);
+    static std::unique_ptr<ShaderModule> CreateVertexByCode(const std::string& code);
+    static std::unique_ptr<ShaderModule> CreateFragmentByCode(const std::string& code);
+    static std::unique_ptr<ShaderModule> CreateVertexByFile(const std::string& filename);
+    static std::unique_ptr<ShaderModule> CreateFragmentByFile(const std::string& filename);
 
     ~ShaderModule();
 
@@ -31,8 +31,8 @@ private:
 
 class Shader final {
 public:
-    Shader(const std::shared_ptr<ShaderModule>& vertex,
-                const std::shared_ptr<ShaderModule>& fragment);
+    Shader(const ShaderModule& vertex,
+           const ShaderModule& fragment);
     ~Shader();
 
     void Use() const;

@@ -16,7 +16,7 @@ public:
     using LayerContainer = std::list<std::unique_ptr<Layer>>;
 
     /* use `string_view` means it won't change the string and hope you pass string-literal*/
-    Scence(const char* name);
+    Scence(std::string_view name);
 
     virtual ~Scence() = default;
 
@@ -26,7 +26,7 @@ public:
     void OnUpdate();
     void OnRender();
 
-    const char* Name() const { return name_; }
+    std::string_view Name() const { return name_; }
 
     template <typename LayerT, typename... Args>
     void PushBackLayer(const char* name, Args... args) {
@@ -54,7 +54,7 @@ public:
     size_t LayerCount() const { return layers_.size(); }
 
 private:
-    const char* name_;
+    std::string_view name_;
     LayerContainer layers_;
 };
 
@@ -65,9 +65,9 @@ public:
     static void Quit();
 
     template <typename T, typename... Args>
-    static Scence* CreateScence(const char* name, Args&&... args) {
+    static Scence* CreateScence(std::string_view name, Args&&... args) {
         if (storage_.IsExists(name)) {
-            ENGINE_LOG_WARN("Scence %s exists", name);
+            ENGINE_LOG_WARN("Scence %s exists", name.data());
             return nullptr;
         } else {
             Scence* scence = new T(name, std::forward<Args>(args)...);
@@ -76,13 +76,13 @@ public:
         }
     }
 
-    static void SwitchScence(const char* name);
-    static Scence* GetScence(const char* name);
+    static void SwitchScence(std::string_view name);
+    static Scence* GetScence(std::string_view name);
     static Scence* GetCurrentScence();
     static void CleanUpOldScence();
 
 private:
-    static Storage<const char*, std::unique_ptr<Scence>> storage_;
+    static Storage<std::string_view, std::unique_ptr<Scence>> storage_;
     static Scence* curScence_;
     static Scence* oldScence_;
 };

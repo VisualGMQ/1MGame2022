@@ -2,7 +2,7 @@
 
 namespace te {
 
-Scence::Scence(const char* name): name_(name) {}
+Scence::Scence(std::string_view name): name_(name) {}
 
 void Scence::OnUpdate() {
     for (auto& layer : layers_) {
@@ -22,7 +22,7 @@ void Scence::OnRender() {
 
 
 
-Storage<const char*, std::unique_ptr<Scence>> ScenceMgr::storage_;
+Storage<std::string_view, std::unique_ptr<Scence>> ScenceMgr::storage_;
 Scence* ScenceMgr::curScence_ = nullptr;
 Scence* ScenceMgr::oldScence_ = nullptr;
 
@@ -45,15 +45,16 @@ void ScenceMgr::Quit() {
         }
         curScence_->OnQuit();
     }
+    storage_.Clear();
 }
 
-void ScenceMgr::SwitchScence(const char* name) {
+void ScenceMgr::SwitchScence(std::string_view name) {
     oldScence_ = curScence_;
     Scence* scence = GetScence(name);
     if (scence) {
         scence->OnInit();
     } else {
-        ENGINE_LOG_ERROR("Scence `%s` not exists", name);
+        ENGINE_LOG_ERROR("Scence `%s` not exists", name.data());
     }
     curScence_ = scence;
 }
@@ -69,7 +70,7 @@ void ScenceMgr::CleanUpOldScence() {
     }
 }
 
-Scence* ScenceMgr::GetScence(const char* name) {
+Scence* ScenceMgr::GetScence(std::string_view name) {
     auto scence = storage_.Find(name);
     if (!scence) {
         return nullptr;

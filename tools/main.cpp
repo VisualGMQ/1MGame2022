@@ -6,7 +6,7 @@
 
 class WelcomeLayer: public te::Layer {
 public:
-    WelcomeLayer(const char* name): te::Layer(name) {}
+    WelcomeLayer(std::string_view name): te::Layer(name) {}
 
     void Render() override {
         bool show = true;
@@ -16,7 +16,7 @@ public:
 
 class WelcomeScence: public te::Scence {
 public:
-    WelcomeScence(const char* name): te::Scence(name) {}
+    WelcomeScence(std::string_view name): te::Scence(name) {}
 
     void OnInit() override {
         PushBackLayer<WelcomeLayer>("StartLayer");

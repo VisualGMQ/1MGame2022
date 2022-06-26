@@ -30,8 +30,8 @@ private:
 
 // a fast way to run application
 template <typename ScenceT, typename... Args>
-void RunScence(const char* name, Args&&... args) {
-    Engine::Init("1MGames 2th", 1024, 720);
+void RunScence(std::string_view name, Args&&... args) {
+    Engine::Init("DarkCube", 1024, 720);
 
     auto scence = te::ScenceMgr::CreateScence<ScenceT>(name, std::forward(args)...);
     ScenceMgr::Init(scence);

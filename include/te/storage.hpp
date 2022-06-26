@@ -19,11 +19,9 @@ public:
     ElemT& Create(const KeyT& name, Args&&... args) {
         auto it = datas_.find(name);
         if (it != datas_.end()) {
-            if (std::is_same_v<KeyT, char*>) {
-                ENGINE_LOG_WARN("%s element aleady exists", name);
-            } else {
-                ENGINE_LOG_WARN("%s element aleady exists", name);
-            }
+            std::stringstream ss;
+            ss << name << " element already exists";
+            ENGINE_LOG_WARN("%s", ss.str().data());
             return it->second;
         } else {
             auto it = datas_.emplace(std::piecewise_construct,

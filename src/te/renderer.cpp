@@ -32,7 +32,7 @@ void Renderer::Init(int w, int h) {
 void Renderer::initShaders() {
     auto vertexShader = ShaderModule::CreateVertexByFile("shader/shader.vert");
     auto fragShader = ShaderModule::CreateFragmentByFile("shader/shader.frag");
-    shader_.reset(new Shader(vertexShader, fragShader));
+    shader_.reset(new Shader(*vertexShader, *fragShader));
 }
 
 void Renderer::initWhiteTexture() {

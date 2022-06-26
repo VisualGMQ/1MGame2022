@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(DarkCube
@@ -16,6 +17,7 @@ set(GLFW_BUILD_EXAMPLES OFF)
 set(GLFW_BUILD_TESTS OFF)
 set(GLFW_BUILD_DOCS OFF)
 set(GLFW_INSTALL OFF)
+set(GLFW_USE_WAYLAND ON)
 add_subdirectory(3rdpart/glfw)
 add_subdirectory(3rdpart/stb)
 
