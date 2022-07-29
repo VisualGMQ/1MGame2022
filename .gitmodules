@@ -1,6 +1,3 @@
 [submodule "3rdlibs/glfw"]
 	path = 3rdlibs/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "3rdlibs/lua"]
-	path = 3rdlibs/lua
-	url = https://github.com/lua/lua.git

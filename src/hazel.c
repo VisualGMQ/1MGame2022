@@ -1,6 +1,6 @@
 #include "hazel/hazel.h"
 
-void RunExampleWindow() {
+void Hazel_RunExampleWindow() {
     GLFWwindow* window;
 
     /* Initialize the library */

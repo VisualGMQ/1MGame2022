@@ -3,6 +3,6 @@
 
 #include "pch.h"
 
-DLLEXPORT void RunExampleWindow();
+DLLEXPORT void Hazel_RunExampleWindow();
 
 #endif

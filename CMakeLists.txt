@@ -9,11 +9,8 @@ project(HazelLuaEngine
 )
 
 set(HAZEL_CORE_NAME hazel_core)
-set(HAZEL_EXECUTOR_NAME hazel)
-
-# glfw
-set(GLFW_BUILD_DOCS OFF)
-set(GLFW_INSTALL OFF)
+set(HAZEL_EXECUTOR_NAME HazelRunner)
+set(HAZEL_LUA_BRIDGE_NAME hazel)
 
 include(cmake/FindLua.cmake)
 include(cmake/FindGLFW.cmake)
@@ -31,4 +28,4 @@ if(WIN32)
 endif(WIN32)
 
 # sandbox
-add_subdirectory(binding/lua/executor)
+add_subdirectory(binding/lua)
