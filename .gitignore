@@ -1,2 +1,7 @@
 build
 .vscode
+testExecutor
+install
+TODO.txt
+.cache
+compile_flags.txt

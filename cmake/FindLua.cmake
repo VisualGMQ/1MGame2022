@@ -33,7 +33,7 @@ set(LUA_SRC
     3rdlibs/lua/src/linit.c
 )
 
-add_library(lua STATIC ${LUA_SRC})
+add_library(lua SHARED ${LUA_SRC})
 target_include_directories(lua PUBLIC ./3rdlibs/lua/src)
 target_compile_features(lua PRIVATE c_std_99)
 
