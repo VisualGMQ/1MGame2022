@@ -447,10 +447,7 @@ function _M.CreatePlayer(pos)
     local entity = _M.CreateEntity("player")
     entity:SetComponent(_M.CreateTransformComponent(hazel.CreatePos(pos.x, pos.y), hazel.CreateSize(constants.TileSize, constants.TileSize), Flip.Vertical))
     entity:SetComponent(_M.CreateImageComponent(content.Tilesheet, 0, 0))
-    entity:SetComponent(_M.CreateControllerComponent())
     entity:SetComponent(_M.CreateRolePropComponent(constants.PlayerInfo.hp, constants.PlayerInfo.velocity))
-    entity:SetComponent(_M.CreateHpShowComponent(hazel.CreateSize(constants.PlayerHpBarInfo.width, constants.PlayerHpBarInfo.height)))
-    entity:SetComponent(_M.CreateGunComponent(constants.BulletInfo.damage, constants.BulletInfo.velocity))
     entity:SetComponent(_M.CreateDirectionComponent(0))
     entity:SetComponent(_M.CreateColliBoxComponent(constants.RoleColliBox))
     entity:SetComponent(_M.CreateInvincibleComponent(constants.Invincible))
@@ -467,7 +464,6 @@ function _M.CreateMonster(pos)
     entity:SetComponent(_M.CreateHpShowComponent(hazel.CreateSize(constants.MonsetHpBarInfo.width, constants.MonsetHpBarInfo.height)))
     entity:SetComponent(_M.CreateDirectionComponent(5))
     entity:SetComponent(_M.CreateColliBoxComponent(constants.RoleColliBox))
-    entity:SetComponent(_M.CreateAIComponent())
     return entity
 end
 

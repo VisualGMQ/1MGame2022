@@ -143,12 +143,76 @@ local function collisionDeal()
     end
 end
 
+local function showRestartHint()
+    ---@type Point
+    local canvaSize = hazel.GetCanvaSize()
+    local drawW = content.RestartHintTexture.w * 2
+    local drawH = content.RestartHintTexture.h * 2
+    local dstRect = hazel.CreateRect((canvaSize.x - drawW) / 2,
+                                     (canvaSize.y - drawH) / 2,
+                                     drawW, drawH)
+    hazel.Renderer.DrawTexture(content.RestartHintTexture, nil, dstRect, hazel.Flip.None)
+end
+
+local function showStartHint()
+    ---@type Point
+    local canvaSize = hazel.GetCanvaSize()
+    local drawW = content.StartHintTexture.w * 2
+    local drawH = content.StartHintTexture.h * 2
+    local dstRect = hazel.CreateRect((canvaSize.x - drawW) / 2,
+                                     (canvaSize.y - drawH) / 2,
+                                     drawW, drawH)
+    hazel.Renderer.DrawTexture(content.StartHintTexture, nil, dstRect, hazel.Flip.None)
+end
+
+local function initGame()
+    content.BulletList = {}
+    content.MonsterList = {}
+    content.PlayerEntity = ECS.CreatePlayer(hazel.CreatePos(constants.TileSize * 16, constants.TileSize * 13))
+    content.MonsterBirthNum = constants.MonsterBirthInitNum
+    content.IsStartGame = false
+end
+
+local function generateMonster()
+    if content.MonsterBirthCountDown > 0 then
+        content.MonsterBirthCountDown = content.MonsterBirthCountDown - hazel.Time.GetElapseTime()
+        return
+    end
+    local dir = math.random(1, 4)
+    ---@type Point
+    local pos = hazel.CreatePos(0, 0)
+    ---@type Point
+    local canvaSize = hazel.GetCanvaSize()
+    if dir == 1 or dir == 3 then
+        pos.y = math.random(-constants.TileSize, canvaSize.y + constants.TileSize)
+        if dir == 1 then
+            pos.x = -constants.TileSize
+        else
+            pos.x = canvaSize.x + constants.TileSize
+        end
+    else
+        pos.x = math.random(-constants.TileSize, canvaSize.x + constants.TileSize)
+        if dir == 2 then
+            pos.y = -constants.TileSize
+        else
+            pos.y = canvaSize.y + constants.TileSize
+        end
+    end
+    ---@type Entity
+    local monster = ECS.CreateMonster(pos)
+    monster:SetComponent(ECS.CreateAIComponent())
+    table.insert(content.MonsterList, monster)
+    content.MonsterBirthCountDown = constants.MonsterBirthInterval
+end
+
 function GameStart()
     hazel.SetWindowIcon("resources/icon.png")
     content.Texture = hazel.LoadTexture("resources/tilesheet.png")
+    content.RestartHintTexture = hazel.LoadTexture("resources/RestartHint.png")
+    content.StartHintTexture = hazel.LoadTexture("resources/StartHint.png")
     content.Tilesheet = hazel.CreateTileSheet(content.Texture, 3, 10)
-    content.PlayerEntity = ECS.CreatePlayer(hazel.CreatePos(constants.TileSize * 10, constants.TileSize * 10))
-    table.insert(content.MonsterList, ECS.CreateMonster(hazel.CreatePos(500, 500)))
+
+    initGame()
 
     hazel.HideCursor()
     generateFloors()
@@ -165,10 +229,42 @@ function GameLoop()
     content.PlayerEntity:Update()
     updateBullet()
     collisionDeal()
+
+    ---@type RolePropComponent
+    local playerRoleInfo = content.PlayerEntity:GetComponent(ECS.ComponentType.RoleProp)
+    if not playerRoleInfo or playerRoleInfo.hp <= 0 then
+        showRestartHint()
+        if hazel.GetKeyState(hazel.Key.R) == hazel.InputState.Press then
+            initGame() 
+        end
+    end
+
+    if not content.IsStartGame then
+        showStartHint()
+        if hazel.GetMouseButtonState(hazel.MouseButton.Left) == hazel.InputState.Press then
+            content.IsStartGame = true
+            content.PlayerEntity:SetComponent(ECS.CreateControllerComponent())
+            content.PlayerEntity:SetComponent(ECS.CreateGunComponent(constants.BulletInfo.damage, constants.BulletInfo.velocity))
+            content.PlayerEntity:SetComponent(ECS.CreateHpShowComponent(hazel.CreateSize(constants.PlayerHpBarInfo.width, constants.PlayerHpBarInfo.height)))
+
+            for _, v in pairs(content.MonsterList) do
+                v:SetComponent(ECS.CreateAIComponent())
+            end
+        end
+    end
+
+    if content.IsStartGame then
+        for i = 0, content.MonsterBirthNum do
+            generateMonster()
+        end
+    end
+
     drawCurosr()
 end
 
 function GameQuit()
     hazel.ShowCursor()
     hazel.DestroyTexture(content.Texture)
+    hazel.DestroyTexture(content.RestartHintTexture)
+    hazel.DestroyTexture(content.StartHintTexture)
 end

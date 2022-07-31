@@ -9,7 +9,7 @@ function _M.Len(p)
 end
 
 ---@return Point
----@param p
+---@param p Point
 function _M.Normalize(p)
     local l = _M.Len(p)
     return hazel.CreatePos(p.x / l, p.y / l)

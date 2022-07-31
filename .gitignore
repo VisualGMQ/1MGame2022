@@ -9,3 +9,4 @@ game/shader
 game/*.dll
 game/*.dll.a
 game/*.exe
+*.zip

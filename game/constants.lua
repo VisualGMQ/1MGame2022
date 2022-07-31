@@ -16,6 +16,8 @@ _M.RoleColliBox = {
     x = 9,
     y = 0,
 }
+_M.MonsterBirthInterval = 1
+_M.MonsterBirthInitNum = 1
 _M.Invincible = 1
 _M.BulletColliBox = {
     x = 10,
