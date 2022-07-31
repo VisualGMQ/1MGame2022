@@ -5,3 +5,7 @@ install
 TODO.txt
 .cache
 compile_flags.txt
+game/shader
+game/*.dll
+game/*.dll.a
+game/*.exe
