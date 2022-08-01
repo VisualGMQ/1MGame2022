@@ -3,6 +3,7 @@ local constants = require "constants"
 local math = require "math"
 local vmath = require "vmath"
 local content = require "content"
+local timer = require "timer"
 
 ---@class ECS
 local _M = {}
@@ -203,7 +204,6 @@ end
 ---@class ControllerComponent:Component
 
 ---@return ControllerComponent 
----@param speed number
 function _M.CreateControllerComponent()
     local o = { isActive = true, name = ComponentType.Controller, parent = nil }
 
@@ -229,6 +229,12 @@ function _M.CreateControllerComponent()
             transform.position.y = transform.position.y + speed * elapseTime
         end
 
+        local canvaSize = hazel.GetCanvaSize()
+        if transform.position.x < 0 then transform.position.x = 0 end
+        if transform.position.x + transform.size.x > canvaSize.x then transform.position.x = canvaSize.x - transform.size.x end
+        if transform.position.y < constants.PlayerHpBarInfo.height then transform.position.y = constants.PlayerHpBarInfo.height end
+        if transform.position.y + transform.size.y > canvaSize.y then transform.position.y = canvaSize.y - transform.size.y end
+
         ---@type Point
         local mousePos = hazel.GetGameMousePos()
 
@@ -239,6 +245,14 @@ function _M.CreateControllerComponent()
         ---@type Point
         local mouseDir = hazel.CreatePos(mousePos.x - playerCenterX, mousePos.y - playerCenterY)
         self:GetParent():GetComponent(ComponentType.Direction):SetDir(mouseDir)
+
+        if hazel.GetMouseButtonState(hazel.MouseButton.Left) == hazel.InputState.Press then
+            ---@type GunComponent
+            local gun = self:GetParent():GetComponent(ComponentType.Gun)
+            if gun then
+                gun:Fire(vmath.Normalize(mouseDir))
+            end
+        end
     end
 
     return _M.CreateComponent(o)
@@ -250,26 +264,54 @@ end
 ---@return InvincibleComponent
 ---@param time number
 function _M.CreateInvincibleComponent(time)
-    local o = { isActive = true, name = ComponentType.Invincible, cooldown = time, timeCountDown = time, parent = nil }
+    local o = { isActive = true, name = ComponentType.Invincible, isInvincible = false, parent = nil }
+    o.flashTimer = nil
+    ---@type Timer
+    o.cdTimer = timer.CreateTimer(time, 1, function ()
+        o.isInvincible = false
+    end)
+    o.cdTimer:Stop()
 
     ---@return boolean
     ---@param self InvincibleComponent
     o.IsInvincibleState = function(self)
-        return self.timeCountDown > 0
+        return self.cdTimer:IsRunning()
     end
 
     ---@param self InvincibleComponent
     o.IntoInvincible = function(self)
-        if self.timeCountDown <= 0 then
-            self.timeCountDown = self.cooldown
+        if self.isInvincible then
+            return
         end
+        self.isInvincible = true
+        self.cdTimer:Rewind()
+        self.cdTimer:Start()
+        self.flashTimer = timer.CreateTimer(0.1, time / 0.1,
+            function()
+                ---@type ImageComponent
+                local image = o:GetParent():GetComponent(ComponentType.Image)
+                if image then
+                    if image:IsActive() then
+                        image:Disable()
+                    else
+                        image:Enable()
+                    end
+                end
+            end,
+            function()
+                ---@type ImageComponent
+                local image = o:GetParent():GetComponent(ComponentType.Image)
+                if image then
+                    image:Enable()
+                end
+            end)
     end
 
     ---@param self InvincibleComponent
     o.Update = function(self)
-        self.timeCountDown = self.timeCountDown - hazel.Time.GetElapseTime()
-        if self.timeCountDown < 0 then
-            self.timeCountDown = 0
+        self.cdTimer:Update()
+        if self.flashTimer then
+            self.flashTimer:Update()
         end
     end
 
@@ -368,32 +410,37 @@ end
 ---@param damage number
 ---@param velocity number
 function _M.CreateGunComponent(damage, velocity)
-    local o = { isActive = true, name = ComponentType.Gun, damage = damage, timeCounter = 0, parent = nil }
+    local o = { isActive = true, name = ComponentType.Gun, damage = damage, canShoot = true, velocity = velocity, parent = nil }
+    o.cdTimer = timer.CreateTimer(constants.GunInfo.cooldown, -1, function()
+        o.canShoot = true
+    end)
+
+    ---@param self GunComponent
+    ---@param dir Point
+    o.Fire = function(self, dir)
+        if  not self.canShoot  then
+            return
+        end
+        ---@type Point
+        local position = self:GetParent():GetComponent(ComponentType.Transform).position
+        local playerCenterX = position.x + constants.TileSize / 2
+        local playerCenterY = position.y + constants.TileSize / 2
+        local ndir = vmath.Normalize(dir)
+        local bullet = _M.CreateBullet(hazel.CreatePos(playerCenterX - constants.TileSize / 2, playerCenterY - constants.TileSize / 2),
+                                       self.damage,
+                                       hazel.CreatePos(ndir.x * self.velocity, ndir.y * self.velocity))
+        table.insert(content.BulletList, bullet)
+
+        self.canShoot = false
+    end
+
     ---@param self GunComponent
     o.Update = function(self)
-        if self.timeCounter < constants.GunInfo.cooldown then
-            self.timeCounter = self.timeCounter + hazel.Time.GetElapseTime()
-        end
-        if self.timeCounter >= constants.GunInfo.cooldown then
-            self.timeCounter = constants.GunInfo.cooldown
-        end
-        if hazel.GetMouseButtonState(hazel.MouseButton.Left) == hazel.InputState.Press and self.timeCounter >= constants.GunInfo.cooldown then
-            self.timeCounter = self.timeCounter - constants.GunInfo.cooldown
-            ---@type Point
-            local position = self:GetParent():GetComponent(ComponentType.Transform).position
-            ---@type Point
-            local mousePos = hazel.GetGameMousePos()
-            local playerCenterX = position.x + constants.TileSize / 2
-            local playerCenterY = position.y + constants.TileSize / 2
-            local nMouseDir = vmath.Normalize(hazel.CreatePos(mousePos.x - playerCenterX, mousePos.y - playerCenterY))
-
-            local bullet = _M.CreateBullet(hazel.CreatePos(playerCenterX - constants.TileSize / 2, playerCenterY - constants.TileSize / 2), self.damage, hazel.CreatePos(nMouseDir.x * velocity, nMouseDir.y * velocity))
-            table.insert(content.BulletList, bullet)
-        end
+        self.cdTimer:Update()
     end
+
     return _M.CreateComponent(o)
 end
-
 
 
 ---@class BulletComponent:Component
@@ -449,6 +496,7 @@ function _M.CreatePlayer(pos)
     entity:SetComponent(_M.CreateImageComponent(content.Tilesheet, 0, 0))
     entity:SetComponent(_M.CreateRolePropComponent(constants.PlayerInfo.hp, constants.PlayerInfo.velocity))
     entity:SetComponent(_M.CreateDirectionComponent(0))
+    entity:SetComponent(_M.CreateGunComponent(constants.BulletInfo.damage, constants.BulletInfo.velocity))
     entity:SetComponent(_M.CreateColliBoxComponent(constants.RoleColliBox))
     entity:SetComponent(_M.CreateInvincibleComponent(constants.Invincible))
     return entity

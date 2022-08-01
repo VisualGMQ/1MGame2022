@@ -10,8 +10,8 @@ _M.RestartHintTexture = nil
 ---@type Texture
 _M.StartHintTexture = nil
 
----@type boolean
-_M.IsStartGame = false
+---@type Texture
+_M.LicensTexture = nil
 
 ---@type TileSheet
 _M.Tilesheet = nil
@@ -21,6 +21,14 @@ _M.PlayerEntity = nil
 
 ---@type table<Entity>
 _M.BulletList = {}
+
+_M.GameStateEnum = {
+    ShowLogo = 1,
+    WaitStart = 2,
+    Gaming = 3,
+}
+
+_M.GameState = _M.GameStateEnum.ShowLogo
 
 ---@type table<Entity>
 _M.MonsterList = {}

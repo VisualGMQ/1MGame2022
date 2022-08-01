@@ -1,9 +1,9 @@
 local hazel = require "hazel"
 local ECS = require "ecs"
 local constants = require "constants"
-local math = require "math"
 local content = require "content"
 local vmath = require "vmath"
+local timer = require "timer"
 
 local function drawCurosr()
     hazel.Renderer.SetDrawColor(1, 0, 0, 1)
@@ -170,7 +170,7 @@ local function initGame()
     content.MonsterList = {}
     content.PlayerEntity = ECS.CreatePlayer(hazel.CreatePos(constants.TileSize * 16, constants.TileSize * 13))
     content.MonsterBirthNum = constants.MonsterBirthInitNum
-    content.IsStartGame = false
+    content.GameState = content.GameStateEnum.WaitStart
 end
 
 local function generateMonster()
@@ -205,14 +205,25 @@ local function generateMonster()
     content.MonsterBirthCountDown = constants.MonsterBirthInterval
 end
 
+---@type Timer
+local showLicenseTimer = nil
+
 function GameStart()
     hazel.SetWindowIcon("resources/icon.png")
     content.Texture = hazel.LoadTexture("resources/tilesheet.png")
     content.RestartHintTexture = hazel.LoadTexture("resources/RestartHint.png")
+    content.LicensTexture = hazel.LoadTexture("resources/License.png")
     content.StartHintTexture = hazel.LoadTexture("resources/StartHint.png")
     content.Tilesheet = hazel.CreateTileSheet(content.Texture, 3, 10)
 
     initGame()
+
+    content.GameState = content.GameStateEnum.ShowLogo
+
+    showLicenseTimer = timer.CreateTimer(constants.ShowLicenseTime, 1, function()
+        content.GameState = content.GameStateEnum.WaitStart
+        showLicenseTimer = nil
+    end)
 
     hazel.HideCursor()
     generateFloors()
@@ -221,14 +232,21 @@ end
 function GameLoop()
     hazel.Time.RecordElapseTime()
 
+    if showLicenseTimer then
+        showLicenseTimer:Update()
+    end
+
     hazel.Renderer.SetClearColor(0, 0, 0, 1)
     hazel.Renderer.Clear()
 
-    drawFloors()
-    updateMonster()
-    content.PlayerEntity:Update()
-    updateBullet()
-    collisionDeal()
+    if content.GameState == content.GameStateEnum.ShowLogo then
+        local dstrect = hazel.CreateRect(0, 0, 0, 0)
+        dstrect.w = content.LicensTexture.w * 5
+        dstrect.h = content.LicensTexture.h * 5
+        dstrect.x = (hazel.GetCanvaSize().x - dstrect.w) / 2
+        dstrect.y = (hazel.GetCanvaSize().y - dstrect.h) / 2
+        hazel.Renderer.DrawTexture(content.LicensTexture, nil, dstrect)
+    end
 
     ---@type RolePropComponent
     local playerRoleInfo = content.PlayerEntity:GetComponent(ECS.ComponentType.RoleProp)
@@ -239,12 +257,20 @@ function GameLoop()
         end
     end
 
-    if not content.IsStartGame then
+    if content.GameState == content.GameStateEnum.WaitStart or content.GameState == content.GameStateEnum.Gaming then
+        drawFloors()
+        updateMonster()
+        content.PlayerEntity:Update()
+        updateBullet()
+        collisionDeal()
+        drawCurosr()
+    end
+
+    if content.GameState == content.GameStateEnum.WaitStart then
         showStartHint()
         if hazel.GetMouseButtonState(hazel.MouseButton.Left) == hazel.InputState.Press then
-            content.IsStartGame = true
+            content.GameState = content.GameStateEnum.Gaming
             content.PlayerEntity:SetComponent(ECS.CreateControllerComponent())
-            content.PlayerEntity:SetComponent(ECS.CreateGunComponent(constants.BulletInfo.damage, constants.BulletInfo.velocity))
             content.PlayerEntity:SetComponent(ECS.CreateHpShowComponent(hazel.CreateSize(constants.PlayerHpBarInfo.width, constants.PlayerHpBarInfo.height)))
 
             for _, v in pairs(content.MonsterList) do
@@ -253,13 +279,11 @@ function GameLoop()
         end
     end
 
-    if content.IsStartGame then
+    if content.GameState == content.GameStateEnum.Gaming then
         for i = 0, content.MonsterBirthNum do
             generateMonster()
         end
     end
-
-    drawCurosr()
 end
 
 function GameQuit()
@@ -267,4 +291,5 @@ function GameQuit()
     hazel.DestroyTexture(content.Texture)
     hazel.DestroyTexture(content.RestartHintTexture)
     hazel.DestroyTexture(content.StartHintTexture)
+    hazel.DestroyTexture(content.LicensTexture)
 end

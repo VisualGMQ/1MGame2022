@@ -1,5 +1,7 @@
 local _M = {}
 
+_M.ShowLicenseTime = 2.5
+
 _M.TileSize = 32
 _M.PlayerInfo = {
     velocity = 250,
