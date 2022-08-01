@@ -45,3 +45,9 @@ install(
     DIRECTORY shader
     DESTINATION ${CMAKE_SOURCE_DIR}/install
 )
+
+install(
+    FILES binding/lua/hazel_bind.lua
+    DESTINATION ${CMAKE_SOURCE_DIR}/install
+    RENAME hazel.lua
+)
