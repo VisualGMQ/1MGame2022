@@ -10,8 +10,9 @@ local _M = {}
 
 ---@param tilesheet Texture
 ---@param frames table<Frame>
-function _M.CreateAnimation(tilesheet, frames)
-    local o = {tilesheet = tilesheet, frames = frames, index = 1, counter = 0, isPlaying = false}
+---@param onEndCallback function
+function _M.CreateAnimation(tilesheet, frames, onEndCallback)
+    local o = {tilesheet = tilesheet, frames = frames, index = 1, counter = 0, isPlaying = false, onEndCallback = onEndCallback}
     setmetatable(o, {__index = _M})
     return o
 end
@@ -47,7 +48,7 @@ end
 
 ---@param self Animation
 function _M.Rewind(self)
-    self.index = 0
+    self.index = 1
     self.counter = 0
 end
 
@@ -63,14 +64,15 @@ function _M.Update(self)
     end
     if self.index > #self.frames then
         self:Pause()
+        if self.onEndCallback then
+            self.onEndCallback(self)
+        end
+        return
     end
 
     self.counter = self.counter + hazel.Time.GetElapseTime()
     ---@type Frame
     local curFrame = self.frames[self.index]
-    if not curFrame then
-        return
-    end
     if self.counter >= curFrame.time then
         self.counter = self.counter - curFrame.time
         self.index = self.index + 1

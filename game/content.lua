@@ -37,4 +37,24 @@ _M.MonsterBirthNum = 0
 
 _M.MonsterBirthCountDown = 0
 
+_M.Animations = {
+    ---@type Animation
+    PlayerWalkDown = nil,
+    ---@type Animation
+    PlayerWalkUp = nil,
+    ---@type Animation
+    PlayerWalkRight = nil,
+    ---@type Animation
+    PlayerWalkLeft = nil,
+
+    ---@type Animation
+    EnemyWalkDown = nil,
+    ---@type Animation
+    EnemyWalkUp = nil,
+    ---@type Animation
+    EnemyWalkRight = nil,
+    ---@type Animation
+    EnemyWalkLeft = nil,
+}
+
 return _M

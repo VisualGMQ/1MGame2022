@@ -4,6 +4,7 @@ local constants = require "constants"
 local content = require "content"
 local vmath = require "vmath"
 local timer = require "timer"
+local animation = require "animation"
 
 local function drawCurosr()
     hazel.Renderer.SetDrawColor(1, 0, 0, 1)
@@ -171,6 +172,11 @@ local function initGame()
     content.PlayerEntity = ECS.CreatePlayer(hazel.CreatePos(constants.TileSize * 16, constants.TileSize * 13))
     content.MonsterBirthNum = constants.MonsterBirthInitNum
     content.GameState = content.GameStateEnum.WaitStart
+    ---@param v Animation
+    for _, v in pairs(content.Animations) do
+        v:Rewind()
+        v:Stop()
+    end
 end
 
 local function generateMonster()
@@ -208,6 +214,19 @@ end
 ---@type Timer
 local showLicenseTimer = nil
 
+---@return Animation
+---@param row number
+---@param time number
+local function createAnimation(row, time)
+    local frame = {}
+    for i = 0, 2 do
+        table.insert(frame, {row = row, col = i, time = time})
+    end
+    return animation.CreateAnimation(content.Tilesheet, frame, function(self)
+        self:Rewind()
+    end)
+end
+
 function GameStart()
     hazel.SetWindowIcon("resources/icon.png")
     content.Texture = hazel.LoadTexture("resources/tilesheet.png")
@@ -220,9 +239,18 @@ function GameStart()
 
     content.GameState = content.GameStateEnum.ShowLogo
 
+    content.Animations.PlayerWalkDown = createAnimation(0, 0.1)
+    content.Animations.PlayerWalkUp = createAnimation(1, 0.1)
+    content.Animations.PlayerWalkRight = createAnimation(2, 0.1)
+    content.Animations.PlayerWalkLeft = createAnimation(3, 0.1)
+
+    content.Animations.EnemyWalkDown = createAnimation(5, 0.1)
+    content.Animations.EnemyWalkUp = createAnimation(6, 0.1)
+    content.Animations.EnemyWalkRight = createAnimation(7, 0.1)
+    content.Animations.EnemyWalkLeft = createAnimation(8, 0.1)
+
     showLicenseTimer = timer.CreateTimer(constants.ShowLicenseTime, 1, function()
         content.GameState = content.GameStateEnum.WaitStart
-        showLicenseTimer = nil
     end)
 
     hazel.HideCursor()
