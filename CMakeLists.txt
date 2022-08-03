@@ -18,7 +18,7 @@ include(cmake/FindSTB.cmake)
 # hazel-core
 aux_source_directory(src HAZEL_SRC)
 add_library(${HAZEL_CORE_NAME} SHARED ${HAZEL_SRC})
-target_link_libraries(${HAZEL_CORE_NAME} PUBLIC glad glfw stb_image)
+target_link_libraries(${HAZEL_CORE_NAME} PUBLIC glad glfw stb_image "winmm")
 target_include_directories(${HAZEL_CORE_NAME} PUBLIC .)
 target_compile_features(${HAZEL_CORE_NAME} PUBLIC c_std_11)
 target_precompile_headers(${HAZEL_CORE_NAME} PUBLIC hazel/pch.h)

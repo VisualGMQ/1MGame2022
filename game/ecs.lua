@@ -4,6 +4,8 @@ local math = require "math"
 local vmath = require "vmath"
 local content = require "content"
 local timer = require "timer"
+local animation = require "animation"
+local helpfuncs = require "helpfunc"
 
 ---@class ECS
 local _M = {}
@@ -29,7 +31,7 @@ function Entity.SetComponent(self, component)
 end
 
 ---@return Component|nil
----@param type string
+---@param type number
 function Entity.GetComponent(self, type)
     if not type then
         return nil
@@ -102,17 +104,20 @@ end
 
 ---@class ComponentType
 local ComponentType = {
-    Transform = "Transform",
-    Image = "Image",
-    Controller = "Controller",
-    RoleProp = "RoleProp",
-    HpShow = "HpShow",
-    Gun = "Gun",
-    Bullet = "Bullet",
-    Direction = "Direction",
-    AI = "AI",
-    ColliBox = "ColliBox",
-    Invincible = "Invincible",
+    Transform = 1,
+    Controller = 2,
+    RoleProp = 3,
+    HpShow = 4,
+    Gun = 5,
+    Bullet = 6,
+    Direction = 7,
+    AI = 8,
+    ColliBox = 9,
+    Invincible = 10,
+    Animator = 11,
+    State = 12,
+    Supply = 13,
+    Image = 14,
 }
 
 _M.ComponentType = ComponentType
@@ -215,6 +220,8 @@ function _M.CreateControllerComponent()
 
         ---@type TransformComponent
         local transform = self:GetParent():GetComponent(ComponentType.Transform)
+        ---@type AnimatorComponent
+        local animator = self:GetParent():GetComponent(ComponentType.Animator)
         local elapseTime = hazel.Time.GetElapseTime()
         if hazel.IsKeyPressing(hazel.Key.A) then
             transform.position.x = transform.position.x - speed * elapseTime
@@ -379,6 +386,10 @@ function _M.CreateAIComponent()
 
     ---@param self AIComponent
     o.Update = function(self)
+        local state = self:GetParent():GetComponent(ComponentType.State):GetState()
+        if state == constants.RoleState.Ice then
+            return
+        end
         ---@type DirectionComponent
         local direction = self:GetParent():GetComponent(ComponentType.Direction)
 
@@ -407,31 +418,50 @@ end
 ---@field speed Point
 
 ---@return GunComponent
----@param damage number
----@param velocity number
-function _M.CreateGunComponent(damage, velocity)
-    local o = { isActive = true, name = ComponentType.Gun, damage = damage, canShoot = true, velocity = velocity, parent = nil }
-    o.cdTimer = timer.CreateTimer(constants.GunInfo.cooldown, -1, function()
+---@param type number
+---@param bulletNum number|nil
+function _M.CreateGunComponent(type, bulletNum)
+    local o = { isActive = true, name = ComponentType.Gun, type = type, canShoot = true, parent = nil }
+    o.bulletNum = constants.BulletInfo[type or constants.BulletType.Normal].initNum
+    o.cdTimer = timer.CreateTimer(constants.BulletInfo[type].cooldown, -1, function()
         o.canShoot = true
     end)
+
+    o.SetType = function(self, type)
+        self.type = type or constants.BulletType.Normal
+        self.bulletNum = constants.BulletInfo[self.type].initNum
+    end
+
+    o.GetBulletNum = function(self)
+        return self.bulletNum
+    end
 
     ---@param self GunComponent
     ---@param dir Point
     o.Fire = function(self, dir)
-        if  not self.canShoot  then
+        if  not self.canShoot or self.bulletNum == 0  then
             return
         end
+        hazel.Sound.Play(constants.SoundName.Shoot)
         ---@type Point
         local position = self:GetParent():GetComponent(ComponentType.Transform).position
         local playerCenterX = position.x + constants.TileSize / 2
         local playerCenterY = position.y + constants.TileSize / 2
         local ndir = vmath.Normalize(dir)
+        local velocity = constants.BulletInfo[type].velocity
         local bullet = _M.CreateBullet(hazel.CreatePos(playerCenterX - constants.TileSize / 2, playerCenterY - constants.TileSize / 2),
-                                       self.damage,
-                                       hazel.CreatePos(ndir.x * self.velocity, ndir.y * self.velocity))
+                                       constants.BulletInfo[type].damage,
+                                       hazel.CreatePos(ndir.x * velocity, ndir.y * velocity),
+                                       self.type)
         table.insert(content.BulletList, bullet)
 
         self.canShoot = false
+        hazel.Sound.Play(constants.SoundName.Shoot)
+        self.bulletNum = self.bulletNum - 1
+
+        if self.bulletNum == 0 then
+            self:SetType(constants.BulletType.Normal)
+        end 
     end
 
     ---@param self GunComponent
@@ -450,9 +480,14 @@ end
 ---@return BulletComponent
 ---@param damage number
 ---@param speed Point
-function _M.CreateBulletComponent(damage, speed)
-    local o = { isActive = true, name = ComponentType.Bullet, damage = damage, speed = speed, parent = nil }
+---@param type number
+function _M.CreateBulletComponent(damage, speed, type)
+    local o = { isActive = true, name = ComponentType.Bullet, damage = damage, type = type, speed = speed, parent = nil }
     ---@param self BulletComponent
+    o.GetType = function(self)
+        return self.type
+    end
+
     o.Update = function(self)
         local position = self:GetParent():GetComponent(ComponentType.Transform).position
         local elapseTime = hazel.Time.GetElapseTime()
@@ -474,16 +509,150 @@ function _M.CreateColliBoxComponent(rect)
 end
 
 
+---@class SupplyComponent:Component
+---@field rect Rect
+
+---@return SupplyComponent
+---@param type number
+function _M.CreateSupplyComponent(type)
+    local o = { isActive = true, name = ComponentType.Supply, type = type, parent = nil }
+    o.Update = function(self) end
+    return _M.CreateComponent(o)
+end
+
+
+---@class StateComponent:Component
+---@field rect Rect
+
+---@return StateComponent
+---@param state number|nil
+function _M.CreateStateComponent(state)
+    local o = { isActive = true, name = ComponentType.State, state = state or constants.RoleState.Normal, parent = nil }
+    ---@type Animation
+    o.fireAnimation = animation.CreateAnimation(content.Tilesheet, {
+        {row = 10, col = 2, time = 0.2},
+        {row = 11, col = 0, time = 0.2},
+    }, function()
+        o.fireAnimation:Rewind()
+        o.fireAnimation:Play()
+    end)
+    o.GetState = function(self)
+        return self.state
+    end
+    o.IntoIce = function(self)
+        self.state = constants.RoleState.Ice
+        self.cdTimer = timer.CreateTimer(constants.BulletEffectTime.IceTime, 1, function()
+            if self.state == constants.RoleState.Ice then
+                self.state = constants.RoleState.Normal
+            end
+        end)
+    end
+    o.IntoFire = function(self)
+        self.state = constants.RoleState.Fire
+        self.fireAnimation:Play()
+        self.cdTimer = timer.CreateTimer(constants.BulletEffectTime.FireTime, 1, function()
+            self.fireAnimation:Stop()
+            if self.state == constants.RoleState.Fire then
+                self.state = constants.RoleState.Normal
+            end
+        end)
+    end
+    ---@param self StateComponent
+    o.Update = function(self)
+        self.fireAnimation:Update()
+        if self.fireAnimation:IsPlaying() then
+            local frame = self.fireAnimation:GetCurFrame()
+            ---@type Point
+            local position = self:GetParent():GetComponent(ComponentType.Transform).position
+            self.fireAnimation:GetTilesheet():Draw(frame.col, frame.row, hazel.CreateRect(position.x, position.y, constants.TileSize, constants.TileSize))
+        end
+        if self.state == constants.RoleState.Ice then
+            local position = self:GetParent():GetComponent(ComponentType.Transform).position
+            content.Tilesheet:Draw(2, 9, hazel.CreateRect(position.x, position.y, constants.TileSize, constants.TileSize))
+        elseif self.state == constants.RoleState.Fire then
+            ---@type RolePropComponent
+            local roleProp = self:GetParent():GetComponent(ComponentType.RoleProp)
+            local oldHp = roleProp.hp
+            roleProp.hp = roleProp.hp - constants.BulletInfo[constants.BulletType.Fire].fireDamage
+            if oldHp > 0 and roleProp.hp <= 0 then
+                content.Score = content.Score + 1
+                helpfuncs.IncKillNum()
+            end
+        end
+        if self.cdTimer then
+            self.cdTimer:Update()
+        end
+    end
+    return _M.CreateComponent(o)
+end
+
+---@class AnimatorComponent:Component
+---@field Play function
+---@field Stop function
+---@field Pause function
+---@field Rewind function
+---@field SetAnimation function
+---@field GetAnimation function
+
+---@param ani Animation
+function _M.CreateAnimatorComponent(ani)
+    local o = { isActive = true, name = ComponentType.Animator, ani = ani, parent = nil }
+
+    o.Play = function(self) self.ani:Play() end
+    o.Pause = function(self) self.ani:Pause() end
+    o.Rewind = function(self) self.ani:Rewind() end
+    o.Stop = function(self)
+        self.ani:Stop()
+        self.ani:Rewind()
+    end
+    o.SetAnimation = function(self, ani)
+        if self.ani then
+            self.ani:Stop()
+            self.ani:Rewind()
+            self.ani = ani
+        end
+    end
+    o.GetAnimation = function(self) return self.ani end
+
+    ---@param self AnimatorComponent
+    o.Update = function(self)
+        if not self.ani then
+            return
+        end
+        self.ani:Update()
+        ---@type ImageComponent
+        local image = self:GetParent():GetComponent(ComponentType.Image)
+        if image then
+            local frame = self.ani:GetCurFrame()
+            if frame then
+                image.row = frame.row
+                image.col = frame.col
+                image.tilesheet = self.ani:GetTilesheet()
+            end
+        end
+    end
+    return _M.CreateComponent(o)
+end
+
+
 ---@return Entity
 ---@param pos Point
 ---@param damage number
 ---@param speed Point
-function _M.CreateBullet(pos, damage, speed)
+---@param type number|nil
+function _M.CreateBullet(pos, damage, speed, type)
+    type = type or constants.BulletType.Normal
     ---@type Entity
     local entity = _M.CreateEntity("Bullet")
     entity:SetComponent(_M.CreateTransformComponent(pos, hazel.CreateSize(constants.TileSize, constants.TileSize)))
-    entity:SetComponent(_M.CreateBulletComponent(damage, speed))
-    entity:SetComponent(_M.CreateImageComponent(content.Tilesheet, 1, 4))
+    entity:SetComponent(_M.CreateBulletComponent(damage, speed, type))
+    if type == constants.BulletType.Normal then
+        entity:SetComponent(_M.CreateImageComponent(content.Tilesheet, 1, 4))
+    elseif type == constants.BulletType.Ice then
+        entity:SetComponent(_M.CreateImageComponent(content.Tilesheet, 0, 10))
+    elseif type == constants.BulletType.Fire then
+        entity:SetComponent(_M.CreateImageComponent(content.Tilesheet, 1, 10))
+    end
     entity:SetComponent(_M.CreateColliBoxComponent(constants.BulletColliBox))
     return entity
 end
@@ -496,9 +665,10 @@ function _M.CreatePlayer(pos)
     entity:SetComponent(_M.CreateImageComponent(content.Tilesheet, 0, 0))
     entity:SetComponent(_M.CreateRolePropComponent(constants.PlayerInfo.hp, constants.PlayerInfo.velocity))
     entity:SetComponent(_M.CreateDirectionComponent(0))
-    entity:SetComponent(_M.CreateGunComponent(constants.BulletInfo.damage, constants.BulletInfo.velocity))
+    entity:SetComponent(_M.CreateGunComponent(constants.BulletType.Fire))
     entity:SetComponent(_M.CreateColliBoxComponent(constants.RoleColliBox))
     entity:SetComponent(_M.CreateInvincibleComponent(constants.Invincible))
+    entity:SetComponent(_M.CreateStateComponent())
     return entity
 end
 
@@ -512,6 +682,20 @@ function _M.CreateMonster(pos)
     entity:SetComponent(_M.CreateHpShowComponent(hazel.CreateSize(constants.MonsetHpBarInfo.width, constants.MonsetHpBarInfo.height)))
     entity:SetComponent(_M.CreateDirectionComponent(5))
     entity:SetComponent(_M.CreateColliBoxComponent(constants.RoleColliBox))
+    entity:SetComponent(_M.CreateStateComponent())
+    return entity
+end
+
+
+---@return Entity
+---@param type number
+---@param pos Point
+function _M.CreateSupply(type, pos)
+    local entity = _M.CreateEntity("supply")
+    entity:SetComponent(_M.CreateTransformComponent(pos, hazel.CreateSize(constants.TileSize, constants.TileSize)))
+    entity:SetComponent(_M.CreateImageComponent(content.Tilesheet, 1, 11))
+    entity:SetComponent(_M.CreateColliBoxComponent(constants.SupplyColliBox))
+    entity:SetComponent(_M.CreateSupplyComponent(type))
     return entity
 end
 

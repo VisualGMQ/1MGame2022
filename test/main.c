@@ -1,9 +1,12 @@
 #include "hazel/hazel.h"
 #include "hazel/renderer.h"
+#include "hazel/sound.h"
 
 Hazel_Texture* texture = NULL;
 
 void GameStart() {
+    Hazel_LoadSound("test/resources/2.wav", "MUSIC1");
+    Hazel_PlaySound("MUSIC1");
     texture = Hazel_LoadTexture("test/resources/player.png");
     Hazel_TextureSetColor(texture, 0, 1, 0);
     Hazel_TextureSetAlpha(texture, 0.3);

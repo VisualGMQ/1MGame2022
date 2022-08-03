@@ -13,8 +13,14 @@ _M.StartHintTexture = nil
 ---@type Texture
 _M.LicensTexture = nil
 
+---@type Texture
+_M.NumberTexture = nil
+
 ---@type TileSheet
 _M.Tilesheet = nil
+
+---@type TileSheet
+_M.NumberTilesheet = nil
 
 ---@type Entity
 _M.PlayerEntity = nil
@@ -56,5 +62,13 @@ _M.Animations = {
     ---@type Animation
     EnemyWalkLeft = nil,
 }
+
+---@type number
+_M.KillNum = 0
+---@type number
+_M.Score = 0
+
+---@type table<Entity>
+_M.SupplyList = {}
 
 return _M

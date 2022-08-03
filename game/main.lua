@@ -5,6 +5,7 @@ local content = require "content"
 local vmath = require "vmath"
 local timer = require "timer"
 local animation = require "animation"
+local helpfunc = require "helpfunc"
 
 local function drawCurosr()
     hazel.Renderer.SetDrawColor(1, 0, 0, 1)
@@ -70,6 +71,13 @@ local function updateMonster()
     end
 end
 
+local function updateSupply()
+    ---@param v Entity
+    for _, v in pairs(content.SupplyList) do
+        v:Update()
+    end
+end
+
 local function collisionDeal()
     ---@type Rect
     local playerBox = content.PlayerEntity:GetComponent(ECS.ComponentType.ColliBox).rect
@@ -96,13 +104,18 @@ local function collisionDeal()
             if vmath.IsRectIntersect(playerColliBox, monsterColliBox) then
                 ---@type InvincibleComponent
                 local playerInvincible = content.PlayerEntity:GetComponent(ECS.ComponentType.Invincible)
-                if not playerInvincible:IsInvincibleState() then
+                if playerInvincible and not playerInvincible:IsInvincibleState() then
                     ---@type RolePropComponent
                     local playerRoleProp = content.PlayerEntity:GetComponent(ECS.ComponentType.RoleProp)
+                    local oldHp = playerRoleProp.hp
                     playerRoleProp.hp = playerRoleProp.hp - monsterRoleProp.damage
+                    hazel.Sound.Play(constants.SoundName.PlayerHurt)
                     if playerRoleProp:IsDie() then
+                        content.PlayerEntity:RemoveComponent(ECS.ComponentType.Invincible)
+                        if oldHp > 0 then
+                            hazel.Sound.Play(constants.SoundName.GameOver)
+                        end
                         content.PlayerEntity:RemoveComponent(ECS.ComponentType.Controller)
-                        content.PlayerEntity:RemoveComponent(ECS.ComponentType.Gun)
                         content.PlayerEntity:RemoveComponent(ECS.ComponentType.Direction)
                         content.PlayerEntity:RemoveComponent(ECS.ComponentType.HpShow)
                         ---@type ImageComponent
@@ -127,17 +140,53 @@ local function collisionDeal()
                 if vmath.IsRectIntersect(bulletColliBox, monsterColliBox) then
                     content.BulletList[kb] = nil
                     local damage = bullet:GetComponent(ECS.ComponentType.Bullet).damage
-                    monsterRoleProp.hp = monsterRoleProp.hp - damage
-                    if monsterRoleProp:IsDie() then
-                        monster:RemoveComponent(ECS.ComponentType.Direction)
-                        monster:RemoveComponent(ECS.ComponentType.AI)
-                        monster:RemoveComponent(ECS.ComponentType.HpShow)
-                        monster:RemoveComponent(ECS.ComponentType.ColliBox)
-                        ---@type ImageComponent
-                        local image = monster:GetComponent(ECS.ComponentType.Image)
-                        image.row = 4
-                        image.col = 2
+                    local oldHp = monsterRoleProp.hp
+                    local bulletType = bullet:GetComponent(ECS.ComponentType.Bullet):GetType()
+                    if bulletType == constants.BulletType.Ice then
+                        monster:GetComponent(ECS.ComponentType.State):IntoIce()
+                    elseif bulletType == constants.BulletType.Fire then
+                        monster:GetComponent(ECS.ComponentType.State):IntoFire()
                     end
+                    monsterRoleProp.hp = monsterRoleProp.hp - damage
+
+                    hazel.Sound.Play(constants.SoundName.MonsterHurt)
+                    if monsterRoleProp:IsDie() then
+                        if oldHp > 0 then
+                            content.Score = content.Score + 1
+                            helpfunc.IncKillNum()
+                        end
+                    end
+                end
+            end
+        end
+
+        ---@param v Entity
+        for i, v in pairs(content.SupplyList) do
+            ---@type Point
+            local supplyPos = v:GetComponent(ECS.ComponentType.Transform).position
+            ---@type Rect
+            local supplyBox = v:GetComponent(ECS.ComponentType.ColliBox).rect
+            ---@type Rect
+            local supplyColliBox = hazel.CreateRect(supplyPos.x + supplyBox.x, supplyPos.y + supplyBox.y, supplyBox.w, supplyBox.h)
+            if vmath.IsRectIntersect(supplyColliBox, playerColliBox) then
+                content.SupplyList[i] = nil
+                ---@type GunComponent
+                local gun = content.PlayerEntity:GetComponent(ECS.ComponentType.Gun)
+                local type = v:GetComponent(ECS.ComponentType.Supply).type
+                print(type)
+                if type == constants.SupplyType.HpRecover then
+                    ---@type RolePropComponent
+                    local roleProp = content.PlayerEntity:GetComponent(ECS.ComponentType.RoleProp)
+                    roleProp.hp = roleProp.hp + constants.SupplyItem[type].recover
+                    if roleProp.hp > constants.PlayerInfo.hp then
+                        roleProp.hp = constants.PlayerInfo.hp
+                    end
+                elseif type == constants.SupplyType.IceGun then
+                    gun:SetType(constants.BulletType.Ice)
+                    gun.bulletNum = gun.bulletNum + constants.SupplyItem[type].num
+                elseif type == constants.SupplyType.FireGun then
+                    gun:SetType(constants.BulletType.Fire)
+                    gun.bulletNum = gun.bulletNum + constants.SupplyItem[type].num
                 end
             end
         end
@@ -167,8 +216,11 @@ local function showStartHint()
 end
 
 local function initGame()
+    content.KillNum = 0
+    content.Score = 0
     content.BulletList = {}
     content.MonsterList = {}
+    content.SupplyList = {}
     content.PlayerEntity = ECS.CreatePlayer(hazel.CreatePos(constants.TileSize * 16, constants.TileSize * 13))
     content.MonsterBirthNum = constants.MonsterBirthInitNum
     content.GameState = content.GameStateEnum.WaitStart
@@ -227,13 +279,56 @@ local function createAnimation(row, time)
     end)
 end
 
+---@param num number
+---@param x number
+---@param y number
+local function drawNum(num, x, y)
+    if num < 0 then
+        content.NumberTilesheet:Draw(10, 0, hazel.CreateRect(x, y, 32, 32))
+        return
+    end
+    local scoreStr = tostring(num)
+    for i = 1, #scoreStr do
+        local col = tonumber(string.sub(scoreStr, i, i))
+        if col == -1 then
+            col = 10
+        end
+        content.NumberTilesheet:Draw(col, 0, hazel.CreateRect(x + (i - 1) * 32, y, 32, 32))
+    end
+end
+
+local function updateRoles()
+    ---@param monster Entity
+    for _, monster in pairs(content.MonsterList) do
+        ---@type RolePropComponent
+        local roleProp = monster:GetComponent(ECS.ComponentType.RoleProp)
+        if roleProp and roleProp:IsDie() then
+            monster:RemoveComponent(ECS.ComponentType.Direction)
+            monster:RemoveComponent(ECS.ComponentType.AI)
+            monster:RemoveComponent(ECS.ComponentType.HpShow)
+            monster:RemoveComponent(ECS.ComponentType.ColliBox)
+            monster:RemoveComponent(ECS.ComponentType.State)
+            ---@type ImageComponent
+            local image = monster:GetComponent(ECS.ComponentType.Image)
+            image.row = 4
+            image.col = 2
+        end
+    end
+end
+
 function GameStart()
     hazel.SetWindowIcon("resources/icon.png")
     content.Texture = hazel.LoadTexture("resources/tilesheet.png")
     content.RestartHintTexture = hazel.LoadTexture("resources/RestartHint.png")
     content.LicensTexture = hazel.LoadTexture("resources/License.png")
     content.StartHintTexture = hazel.LoadTexture("resources/StartHint.png")
-    content.Tilesheet = hazel.CreateTileSheet(content.Texture, 3, 10)
+    content.Tilesheet = hazel.CreateTileSheet(content.Texture, 3, 12)
+    content.NumberTexture = hazel.LoadTexture("resources/numbers.png")
+    content.NumberTilesheet = hazel.CreateTileSheet(content.NumberTexture, 11, 1)
+    hazel.Sound.Load("resources/gameover.wav", constants.SoundName.GameOver)
+    hazel.Sound.Load("resources/player_hurt.wav", constants.SoundName.PlayerHurt)
+    hazel.Sound.Load("resources/monster_hurt.wav", constants.SoundName.MonsterHurt)
+    hazel.Sound.Load("resources/shoot.wav", constants.SoundName.Shoot)
 
     initGame()
 
@@ -276,6 +371,17 @@ function GameLoop()
         hazel.Renderer.DrawTexture(content.LicensTexture, nil, dstrect)
     end
 
+    if content.GameState == content.GameStateEnum.WaitStart or content.GameState == content.GameStateEnum.Gaming then
+        drawFloors()
+        updateSupply()
+        updateMonster()
+        content.PlayerEntity:Update()
+        updateBullet()
+        collisionDeal()
+        drawCurosr()
+        updateRoles()
+    end
+
     ---@type RolePropComponent
     local playerRoleInfo = content.PlayerEntity:GetComponent(ECS.ComponentType.RoleProp)
     if not playerRoleInfo or playerRoleInfo.hp <= 0 then
@@ -285,13 +391,14 @@ function GameLoop()
         end
     end
 
-    if content.GameState == content.GameStateEnum.WaitStart or content.GameState == content.GameStateEnum.Gaming then
-        drawFloors()
-        updateMonster()
-        content.PlayerEntity:Update()
-        updateBullet()
-        collisionDeal()
-        drawCurosr()
+    if content.GameState == content.GameStateEnum.Gaming then
+        ---@type GunComponent 
+        local gun = content.PlayerEntity:GetComponent(ECS.ComponentType.Gun)
+        local x = hazel.GetCanvaSize().x - 128
+        drawNum(content.Score, x, 32)
+        if gun then
+            drawNum(gun:GetBulletNum(), x, 80)
+        end
     end
 
     if content.GameState == content.GameStateEnum.WaitStart then

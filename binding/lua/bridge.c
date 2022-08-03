@@ -5,6 +5,7 @@
 
 #include "hazel/hazel.h"
 #include "hazel/renderer.h"
+#include "hazel/sound.h"
 
 static int LuaBridge_RenderSetClearColor(lua_State* L) {
     float r = luaL_checknumber(L, 1);
@@ -145,13 +146,26 @@ static int LuaBridge_GetWindowSize(lua_State* L) {
     return 2;
 }
 
-static int LuaBridge_HideCursor() {
+static int LuaBridge_HideCursor(lua_State* L) {
     Hazel_HideCursor();
     return 0;
 }
 
-static int LuaBridge_ShowCursor() {
+static int LuaBridge_ShowCursor(lua_State* L) {
     Hazel_ShowCursor();
+    return 0;
+}
+
+static int LuaBridge_LoadSound(lua_State* L) {
+    const char* filename = luaL_checkstring(L, 1);
+    const char* soundName = luaL_checkstring(L, 2);
+    Hazel_LoadSound(filename, soundName);
+    return 0;
+}
+
+static int LuaBridge_PlaySound(lua_State* L) {
+    const char* soundName = luaL_checkstring(L, 1);
+    Hazel_PlaySound(soundName);
     return 0;
 }
 
@@ -176,6 +190,8 @@ static const struct luaL_Reg libhazel[] = {
     {"HideCursor", LuaBridge_HideCursor},
     {"ShowCursor", LuaBridge_ShowCursor},
     {"SayHello", LuaBridge_SayHello},
+    {"LoadSound", LuaBridge_LoadSound},
+    {"PlaySound", LuaBridge_PlaySound},
     {NULL, NULL},
 };
 

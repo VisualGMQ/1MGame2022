@@ -8,7 +8,7 @@ local _M = {}
 ---@field col number
 ---@field time number
 
----@param tilesheet Texture
+---@param tilesheet TileSheet
 ---@param frames table<Frame>
 ---@param onEndCallback function
 function _M.CreateAnimation(tilesheet, frames, onEndCallback)
@@ -42,6 +42,8 @@ function _M.GetCurFrame(self)
     end
 end
 
+---@return TileSheet
+---@param self Animation
 function _M.GetTilesheet(self)
     return self.tilesheet
 end

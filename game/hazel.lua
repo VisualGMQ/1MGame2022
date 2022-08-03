@@ -462,4 +462,21 @@ end
 
 _M.Time = Time
 
+
+local Sound = {}
+
+---@param filename string
+---@param name string
+function Sound.Load(filename, name)
+    libhazel.LoadSound(filename, name);
+end
+
+---@param name string
+function Sound.Play(name)
+    libhazel.PlaySound( name);
+end
+
+_M.Sound = Sound
+
+
 return _M
