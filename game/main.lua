@@ -66,8 +66,13 @@ end
 
 local function updateMonster()
     ---@param v Entity
-    for _, v in pairs(content.MonsterList) do
-        v:Update()
+    for i, v in pairs(content.MonsterList) do
+        if v:GetComponent(ECS.ComponentType.RoleProp):IsDie() then
+            table.insert(content.MonsterCorpseList, v)
+            content.MonsterList[i] = nil
+        else
+            v:Update()
+        end
     end
 end
 
@@ -92,7 +97,7 @@ local function collisionDeal()
     local playerPos = content.PlayerEntity:GetComponent(ECS.ComponentType.Transform).position
     ---@type Rect
     local playerColliBox = hazel.CreateRect(playerPos.x + playerBox.x, playerPos.y + playerBox.y, playerBox.w, playerBox.h)
-    ---@type m Entity
+    ---@type Entity
     for km, _ in pairs(content.MonsterList) do
         ---@type Entity
         local monster = content.MonsterList[km]
@@ -162,11 +167,13 @@ local function collisionDeal()
                     hazel.Sound.Play(constants.SoundName.MonsterHurt)
                     if monsterRoleProp:IsDie() then
                         if oldHp > 0 then
+                            ---@type SlowTrapComponent
+                            local slowTrap = ECS.CreateSlowTrapComponent()
+                            monster:SetComponent(slowTrap)
+                            slowTrap:StartDissolve()
                             content.Score = content.Score + 1
                             helpfunc.IncKillNum()
                         end
-                        table.insert(content.MonsterCorpseList, monster)
-                        content.MonsterList[km] = nil
                     end
                 end
             end
@@ -188,7 +195,7 @@ local function collisionDeal()
                 if type == constants.SupplyType.HpRecover then
                     local index = #content.HpRecoverListAnim + 1
                     local hpRecoverAnim = animation.CreateAnimation(content.Tilesheet, {
-                        {row = 12, col = 0, time = 0.5},
+                        {row = 12, col = 1, time = 0.5},
                     }, function()
                         content.HpRecoverListAnim[index] = nil
                     end)
@@ -212,6 +219,33 @@ local function collisionDeal()
                 end
             end
         end
+    end
+
+    ---@type boolean
+    local isSlowed = False
+    ---@type RolePropComponent
+    local playerProp = content.PlayerEntity:GetComponent(ECS.ComponentType.RoleProp)
+    playerProp.speed = constants.PlayerSlowSpeed
+    ---@param mk number
+    ---@param corpse Entity
+    for mk, corpse in pairs(content.MonsterCorpseList) do
+        ---@type Point
+        local corpsePos = corpse:GetComponent(ECS.ComponentType.Transform).position
+        ---@type Rect
+        local corpseBox = corpse:GetComponent(ECS.ComponentType.ColliBox).rect
+        ---@type Rect
+        local corpseColliBox = hazel.CreateRect(corpsePos.x + corpseBox.x, corpsePos.y + corpseBox.y,
+                                                corpseBox.w, corpseBox.h)
+        ---@type SlowTrapComponent
+        local slowTrap = corpse:GetComponent(ECS.ComponentType.SlowTrap)
+        if slowTrap:IsEnable() and vmath.IsRectIntersect(corpseColliBox, playerColliBox) then
+            isSlowed = true
+            playerProp.speed = constants.PlayerSlowSpeed
+        end
+    end
+
+    if not isSlowed then
+        playerProp.speed = constants.PlayerInfo.velocity
     end
 end
 
@@ -243,6 +277,7 @@ local function initGame()
     content.HpRecoverListAnim = {}
     content.BulletList = {}
     content.MonsterList = {}
+    content.MonsterCorpseList = {}
     content.SupplyList = {}
     content.PlayerEntity = ECS.CreatePlayer(hazel.CreatePos(constants.TileSize * 16, constants.TileSize * 13))
     content.MonsterBirthNum = constants.MonsterBirthInitNum
@@ -346,7 +381,7 @@ local function updateRoles()
             monster:RemoveComponent(ECS.ComponentType.Direction)
             monster:RemoveComponent(ECS.ComponentType.AI)
             monster:RemoveComponent(ECS.ComponentType.HpShow)
-            monster:RemoveComponent(ECS.ComponentType.ColliBox)
+            -- monster:RemoveComponent(ECS.ComponentType.ColliBox)
             monster:RemoveComponent(ECS.ComponentType.State)
             ---@type ImageComponent
             local image = monster:GetComponent(ECS.ComponentType.Image)

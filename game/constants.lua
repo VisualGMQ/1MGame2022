@@ -13,14 +13,17 @@ _M.SoundName = {
 
 _M.TileSize = 32
 _M.PlayerInfo = {
-    velocity = 250,
-    hp = 100,
+    velocity = 200,
+    hp = 50,
 }
+_M.PlayerSlowSpeed = 50
+
 _M.MonsterInfo = {
     velocity = 100,
     hp = 50,
     damage = 10,
 }
+_M.MonsterDissolveTime = 5
 _M.RoleColliBox = {
     w = 14,
     h = 32,
@@ -51,9 +54,6 @@ _M.MonsetHpBarInfo= {
     width = _M.TileSize,
     height = 5,
 }
-_M.GunInfo = {
-    cooldown = 0.1
-}
 
 _M.BulletType = {
     Normal = 1,
@@ -71,20 +71,20 @@ _M.BulletInfo = {
     [_M.BulletType.Ice] = {
         damage = 5,
         velocity = 400,
-        cooldown = 0.1,
+        cooldown = 0.2,
         initNum = 100,
     },
     [_M.BulletType.Fire] = {
         damage = 7,
         velocity = 600,
-        cooldown = 0.1,
+        cooldown = 0.4,
         fireDamage = 1,
         initNum = 100,
     },
 }
 
 _M.BulletEffectTime = {
-    IceTime = 2,
+    IceTime = 5,
     FireTime = 2,
 }
 _M.RoleState = {

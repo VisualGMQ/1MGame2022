@@ -117,7 +117,8 @@ local ComponentType = {
     Animator = 11,
     State = 12,
     Supply = 13,
-    Image = 14,
+    SlowTrap = 14,
+    Image = 15,
 }
 
 _M.ComponentType = ComponentType
@@ -430,6 +431,9 @@ function _M.CreateGunComponent(type, bulletNum)
     o.SetType = function(self, type)
         self.type = type or constants.BulletType.Normal
         self.bulletNum = constants.BulletInfo[self.type].initNum
+        o.cdTimer = timer.CreateTimer(constants.BulletInfo[type].cooldown, -1, function()
+            o.canShoot = true
+        end)
     end
 
     o.GetBulletNum = function(self)
@@ -521,6 +525,36 @@ function _M.CreateSupplyComponent(type)
 end
 
 
+---@class SlowTrapComponent:Component
+---@field IsEnable function
+---@field StartDissolve function
+
+---@return SupplyComponent
+function _M.CreateSlowTrapComponent()
+    local o = { isActive = true, name = ComponentType.SlowTrap, isEnable = false, parent = nil }
+    ---@type Timer
+    o.timer = nil
+    o.StartDissolve = function(self)
+        self.timer = timer.CreateTimer(constants.MonsterDissolveTime, 1, function()
+            self.isEnable = true
+            ---@type ImageComponent
+            local image = self:GetParent():GetComponent(ComponentType.Image)
+            if image then
+                image.row = 12
+                image.col = 0
+            end
+        end)
+    end
+    o.IsEnable = function(self) return self.isEnable end
+    o.Update = function(self)
+        if self.timer then
+            self.timer:Update()
+        end
+    end
+    return _M.CreateComponent(o)
+end
+
+
 ---@class StateComponent:Component
 ---@field rect Rect
 
@@ -575,6 +609,9 @@ function _M.CreateStateComponent(state)
             local oldHp = roleProp.hp
             roleProp.hp = roleProp.hp - constants.BulletInfo[constants.BulletType.Fire].fireDamage
             if oldHp > 0 and roleProp.hp <= 0 then
+                local slowTrap = _M.CreateSlowTrapComponent()
+                self:GetParent():SetComponent(slowTrap)
+                slowTrap:StartDissolve()
                 content.Score = content.Score + 1
                 helpfuncs.IncKillNum()
             end
@@ -634,7 +671,6 @@ function _M.CreateAnimatorComponent(ani)
     return _M.CreateComponent(o)
 end
 
-
 ---@return Entity
 ---@param pos Point
 ---@param damage number
@@ -665,7 +701,7 @@ function _M.CreatePlayer(pos)
     entity:SetComponent(_M.CreateImageComponent(content.Tilesheet, 0, 0))
     entity:SetComponent(_M.CreateRolePropComponent(constants.PlayerInfo.hp, constants.PlayerInfo.velocity))
     entity:SetComponent(_M.CreateDirectionComponent(0))
-    entity:SetComponent(_M.CreateGunComponent(constants.BulletType.Fire))
+    entity:SetComponent(_M.CreateGunComponent(constants.BulletType.Normal))
     entity:SetComponent(_M.CreateColliBoxComponent(constants.RoleColliBox))
     entity:SetComponent(_M.CreateInvincibleComponent(constants.Invincible))
     entity:SetComponent(_M.CreateStateComponent())

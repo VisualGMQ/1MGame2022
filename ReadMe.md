@@ -36,3 +36,7 @@ cmake --build build --target install
 # 体积过大
 
 游戏最后的可执行文件和库是经过压缩的（先`strip`再`upx`），最后结果超出1M很正常。
+
+# 游戏截图
+
+![snapshot](./snapshot/snapshot.png)
