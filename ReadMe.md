@@ -29,13 +29,9 @@ cmake -S . -B build
 cmake --build build --target install
 ```
 
-游戏本体在`game`文件夹下，所以你需要将`install`文件夹内的所有`.dll`文件和`HazelRunner.exe`拷贝到`game`文件夹下。
+游戏本体在`game`文件夹下，所以你需要将`install`文件夹内的所有`.dll`文件,`shader`文件夹和`HazelRunner.exe`拷贝到`game`文件夹下。
 
 然后双击`game/HazelRunner.exe`就可以打开游戏了。
-
-# 体积过大
-
-游戏最后的可执行文件和库是经过压缩的（先`strip`再`upx`），最后结果超出1M很正常。
 
 # 游戏截图
 
