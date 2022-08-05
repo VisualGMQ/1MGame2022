@@ -34,10 +34,15 @@ _M.GameStateEnum = {
     Gaming = 3,
 }
 
+_M.HpRecoverListAnim = {}
+
 _M.GameState = _M.GameStateEnum.ShowLogo
 
 ---@type table<Entity>
 _M.MonsterList = {}
+
+---@type table<Entity>
+_M.MonsterCorpseList = {}
 
 _M.MonsterBirthNum = 0
 

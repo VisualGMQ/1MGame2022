@@ -7,6 +7,8 @@ _M.SoundName = {
     PlayerHurt = "PLAYER_HURT",
     MonsterHurt = "MONSTER_HURT",
     GameOver = "GAMEOVER",
+    HpRecover = "HPRECOVER",
+    PickupGun = "PickupGun",
 }
 
 _M.TileSize = 32
@@ -90,7 +92,7 @@ _M.RoleState = {
     Ice = 2,
     Fire = 3,
 }
-_M.SupplyFalldownKillNum = 120
+_M.SupplyFalldownKillNum = 20
 
 _M.SupplyType = {
     IceGun = 1,
@@ -98,8 +100,8 @@ _M.SupplyType = {
     HpRecover = 3,
 }
 _M.SupplyItem = {
-    [_M.SupplyType.IceGun] = { num = 100 },
-    [_M.SupplyType.FireGun] = { num = 100 },
+    [_M.SupplyType.IceGun] = { num = 50},
+    [_M.SupplyType.FireGun] = { num = 50},
     [_M.SupplyType.HpRecover] = { recover = 50},
 }
 

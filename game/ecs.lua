@@ -699,5 +699,4 @@ function _M.CreateSupply(type, pos)
     return entity
 end
 
-
 return _M
