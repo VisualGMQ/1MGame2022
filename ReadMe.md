@@ -3,7 +3,7 @@
 # 下载
 
 Github可以直接在Release界面找到Windows的可执行压缩包。
-Gitme可以在`版本发布`->`Git标签`下找到同样的压缩包。
+Gitme可以在`版本发布`下找到同样的压缩包。
 
 # 编译
 
@@ -17,10 +17,10 @@ Gitme可以在`版本发布`->`Git标签`下找到同样的压缩包。
 git submodule update --init --recursive
 ```
 
-然后使用cmake编译（**十分推荐使用MinGW编译，因为他编译出来的库名称是libhazel.dll和libhazel_core.dll，而MSVC和Clang是hazel.dll和hazel_core.dll，这意味着Lua会找不到对应的库（除非你重命名）**）:
+然后使用cmake编译(**如果你使用MSVC和Clang编译，需要将最后的hazel.dll重命名为libhazel.dll。如果是MinGW，那么他应当产出libhazel.dll**)
 
 ```bash
-cmake -S . -B build -G"MinGW Makefiles"
+cmake -S . -B build 
 ```
 
 然后安装到`install`文件夹：

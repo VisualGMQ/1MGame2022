@@ -39,6 +39,6 @@ target_compile_features(lua PRIVATE c_std_99)
 
 # TODO if you use MinGW, maybe you need this
 # target_compile_options(lua PRIVATE LUA_USE_LINUX)
-if (NOT WIN32)
-    target_compile_options(lua PRIVATE LUA_USE_LINUX)
+if (WIN32)
+    target_compile_definitions(lua PRIVATE "LUA_BUILD_AS_DLL")
 endif()

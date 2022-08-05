@@ -38,6 +38,7 @@ add_subdirectory(test)
 # install
 install(
     TARGETS ${HAZEL_LUA_BRIDGE_NAME} lua ${HAZEL_EXECUTOR_NAME} ${HAZEL_CORE_NAME}
+    RUNTIME
     DESTINATION ${CMAKE_SOURCE_DIR}/install
 )
 
